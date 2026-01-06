@@ -2,15 +2,17 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Arcade Real Estate - Dynamic Mode</title>
+    <title>Arcade Real Estate - Color Inverted</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #121212;
-            --monitor-border: #555;
+            --bg-dark: #0f0f0f;
+            --monitor-border: #444;
             --buy-color: #2ecc71;
             --sell-color: #e74c3c;
-            --empty-color: #333;
+            /* 색상 반전 설정 */
+            --up-color: #3498db;   /* 상승: 파란색 */
+            --down-color: #ff4757; /* 하락: 빨간색 */
         }
 
         body {
@@ -27,99 +29,95 @@
         }
 
         .total-assets {
-            font-size: 20px;
-            padding: 15px;
+            font-size: 22px;
+            padding: 20px;
             color: #f1c40f;
-            text-shadow: 2px 2px 0px #000;
+            text-shadow: 3px 3px 0px #000;
         }
 
         .monitor-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr;
-            gap: 10px;
+            gap: 12px;
             width: 98vw;
-            height: 85vh;
+            height: 82vh;
         }
 
         .monitor {
-            background: #222;
+            background: #1e1e1e;
             border: 6px solid var(--monitor-border);
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 5px;
+            padding: 8px;
             position: relative;
         }
 
-        /* 집 카드 디자인 */
         .house-card {
-            background: #eee;
+            background: #ffffff;
             color: #111;
-            width: 46%;
-            height: 95%;
+            width: 47%;
+            height: 98%;
             border: 4px solid #000;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
-            padding: 8px;
+            padding: 10px;
             box-sizing: border-box;
-            transition: all 0.3s;
         }
 
-        /* 빈 집터 디자인 */
         .house-card.empty {
-            background: var(--empty-color);
-            border: 4px dashed #666;
-            color: #666;
+            background: #222;
+            border: 4px dashed #444;
+            color: #555;
         }
 
-        .house-img { width: 50px; image-rendering: pixelated; }
+        .house-img { width: 55px; image-rendering: pixelated; }
 
         .price-display {
-            font-size: 12px;
+            font-size: 14px;
             font-weight: bold;
-            margin: 5px 0;
+            margin: 8px 0;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            padding: 5px 10px;
+            border-radius: 5px;
         }
 
-        /* 화살표 스타일 */
-        .arrow { font-size: 16px; }
-        .up { color: #ff4757; }
-        .down { color: #2f3542; } /* 화살표만 색깔 강조 */
+        /* 화살표 및 가격 색상 */
+        .arrow { font-size: 18px; }
+        .up { color: var(--up-color); }   /* 파란색 상승 */
+        .down { color: var(--down-color); } /* 빨간색 하락 */
 
-        .inventory-info { font-size: 8px; margin-bottom: 5px; }
+        .inventory-info { font-size: 9px; margin-bottom: 8px; border-top: 2px solid #ddd; width: 100%; text-align: center; padding-top: 5px; }
 
-        .btn-group { display: flex; width: 100%; gap: 4px; }
+        .btn-group { display: flex; width: 100%; gap: 6px; }
         
         button {
             flex: 1;
             font-family: 'Press Start 2P', cursive;
-            font-size: 7px;
-            padding: 10px 0;
+            font-size: 8px;
+            padding: 12px 0;
             border: 3px solid #000;
             cursor: pointer;
             color: white;
+            box-shadow: 0 4px 0 #000;
         }
 
-        .buy-btn { background: var(--buy-color); box-shadow: 0 3px 0 #1e8449; }
-        .sell-btn { background: var(--sell-color); box-shadow: 0 3px 0 #922b21; }
-        button:disabled { background: #777 !important; box-shadow: none !important; cursor: default; }
-        button:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
+        .buy-btn { background: var(--buy-color); }
+        .sell-btn { background: var(--sell-color); }
+        button:disabled { background: #999 !important; box-shadow: none !important; transform: none !important; }
+        button:active:not(:disabled) { transform: translateY(4px); box-shadow: none; }
 
-        /* 파산/생성 애니메이션 */
-        @keyframes flash {
-            0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; }
-        }
-        .event-flash { animation: flash 0.2s 3; }
+        .msg { font-size: 8px; color: #777; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-<div class="total-assets">💰 MONEY: <span id="total-money">5000</span> G</div>
+<div class="total-assets">💰 TOTAL GOLD: <span id="total-money">5000</span></div>
 
 <div class="monitor-grid">
     <div class="monitor" id="m1"></div>
@@ -131,18 +129,15 @@
 <script>
     let globalMoney = 5000;
     const houseData = [];
-    const houseNames = ["핑크궁전", "작은오두막", "블루빌라", "황금성", "숲속텐트", "지하감옥", "구름아파트", "유령저택"];
+    const houseNames = ["블루스카이", "레드벨리", "그린힐", "골드돔", "네온시티", "다크타워", "클라우드", "픽셀홈"];
 
-    // 초기 데이터 세팅
     for (let i = 0; i < 8; i++) {
         houseData.push({
             id: i,
             active: true,
             name: houseNames[i],
-            price: 800 + Math.floor(Math.random() * 400),
-            owned: 0,
-            lastChange: 0,
-            speed: 1000 // 시세 변동 주기 (ms)
+            price: 1000,
+            owned: 0
         });
         renderHouse(i);
     }
@@ -150,24 +145,21 @@
     function renderHouse(id) {
         const monitorIdx = Math.floor(id / 2) + 1;
         const monitorEl = document.getElementById(`m${monitorIdx}`);
-        
-        let html = "";
         const data = houseData[id];
 
+        let html = "";
         if (!data.active) {
-            html = `<div class="house-card empty" id="house-${id}">
-                        <div style="margin-top:40px">공사 중...</div>
-                    </div>`;
+            html = `<div class="house-card empty" id="house-${id}"><div style="margin: auto">CONSTRUCTING...</div></div>`;
         } else {
             html = `
                 <div class="house-card" id="house-${id}">
-                    <div style="font-size: 8px;">${data.name}</div>
+                    <div style="font-size: 9px; font-weight: bold;">${data.name}</div>
                     <img src="https://img.icons8.com/pixel-bold/64/null/home.png" class="house-img">
                     <div class="price-display" id="price-box-${id}">
                         <span id="price-${id}">${data.price}</span>
                         <span id="arrow-${id}" class="arrow">-</span>
                     </div>
-                    <div class="inventory-info">보유: <span id="owned-${id}">${data.owned}</span></div>
+                    <div class="inventory-info">보유량: <span id="owned-${id}">${data.owned}</span></div>
                     <div class="btn-group">
                         <button class="buy-btn" onclick="buy(${id})" ${globalMoney < data.price ? 'disabled' : ''}>BUY</button>
                         <button class="sell-btn" onclick="sell(${id})" ${data.owned === 0 ? 'disabled' : ''}>SELL</button>
@@ -176,82 +168,72 @@
             `;
         }
 
-        // 기존 요소 교체 혹은 추가
         const existing = document.getElementById(`house-${id}`);
-        if (existing) {
-            existing.outerHTML = html;
-        } else {
-            monitorEl.innerHTML += html;
-        }
+        if (existing) existing.outerHTML = html;
+        else monitorEl.innerHTML += html;
     }
 
-    // 메인 로직 루프
     function gameLoop(id) {
         if (!houseData[id].active) return;
-
         const data = houseData[id];
+
+        let change = Math.floor(Math.random() * 241) - 120; // 변동폭 확장
         
-        // 난이도 조절: 가격이 낮을수록 변동 속도가 느려짐 (관찰하기 쉽게)
-        let change = Math.floor(Math.random() * 201) - 100;
-        
-        // 가격 폭락/폭등 확률 조절
-        if (data.price > 2000) change -= 50; // 비싸면 떨어질 확률 높음
-        if (data.price < 400) change += 30;  // 싸면 올라갈 확률 높음
+        // 난이도 조절 루틴
+        if (data.price > 2200) change -= 60; 
+        if (data.price < 400) change += 40;
 
         data.price += change;
-        
-        // 화살표 표시 로직
+
+        // 화면 업데이트 (색상 반전 적용)
         const arrowEl = document.getElementById(`arrow-${id}`);
-        if (arrowEl) {
+        const priceBoxEl = document.getElementById(`price-box-${id}`);
+        
+        if (arrowEl && priceBoxEl) {
             if (change > 0) {
                 arrowEl.innerText = "▲";
-                arrowEl.className = "arrow up";
+                priceBoxEl.className = "price-display up"; // 상승 시 파란색
             } else if (change < 0) {
                 arrowEl.innerText = "▼";
-                arrowEl.className = "arrow down";
+                priceBoxEl.className = "price-display down"; // 하락 시 빨간색
             }
         }
 
         const priceEl = document.getElementById(`price-${id}`);
         if (priceEl) priceEl.innerText = data.price;
 
-        // --- 이벤트 발생: 파산(집 사라짐) ---
+        // 파산 시스템
         if (data.price <= 0) {
             data.price = 0;
             data.active = false;
-            data.owned = 0; // 집이 무너지면 보유량도 0 (리스크)
+            data.owned = 0;
             renderHouse(id);
-            
-            // 3~7초 후 새로운 집 생성
             setTimeout(() => {
                 data.active = true;
-                data.price = 500 + Math.floor(Math.random() * 500);
+                data.price = 600 + Math.floor(Math.random() * 600);
                 renderHouse(id);
-            }, 3000 + Math.random() * 4000);
+                gameLoop(id);
+            }, 4000);
+            return;
         }
 
-        // 속도 조절: 가격이 바닥권일 때 숫자가 천천히 변하게 함 (사기 쉽게)
-        let nextTick = 800;
-        if (data.price < 500) nextTick = 1500; 
-
+        // 속도 조절 (가격이 낮을 때 사용자가 누르기 쉽게 느려짐)
+        let nextTick = data.price < 600 ? 1400 : 800;
         setTimeout(() => gameLoop(id), nextTick);
     }
 
-    // 버튼 기능
     function buy(id) {
-        const data = houseData[id];
-        if (globalMoney >= data.price) {
-            globalMoney -= data.price;
-            data.owned++;
+        if (globalMoney >= houseData[id].price) {
+            globalMoney -= houseData[id].price;
+            houseData[id].owned++;
             updateUI();
         }
     }
 
     function sell(id) {
-        const data = houseData[id];
-        if (data.owned > 0) {
-            globalMoney += data.price;
-            data.owned--;
+        if (houseData[id].owned > 0) {
+            globalMoney += houseData[id].price;
+            houseData[id].owned--;
             updateUI();
         }
     }
@@ -261,7 +243,6 @@
         houseData.forEach((_, i) => renderHouse(i));
     }
 
-    // 각 집마다 개별 루프 시작
     for (let i = 0; i < 8; i++) {
         setTimeout(() => gameLoop(i), Math.random() * 1000);
     }
