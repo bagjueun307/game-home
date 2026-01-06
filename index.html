@@ -2,189 +2,215 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>부동산 타이쿤 - 쥬디 스타일</title>
+    <title>Arcade Real Estate Tycoon</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #f8bbd0; /* 쥬디 느낌의 핑크 배경 */
-            --panel-bg: #ffffff;
-            --pixel-border: 4px solid #000;
+            --bg-dark: #1a1a1a;
+            --monitor-border: #444;
+            --buy-color: #2ecc71;
+            --sell-color: #e74c3c;
+            --text-gold: #f1c40f;
         }
 
         body {
-            background-color: var(--bg-color);
+            background-color: var(--bg-dark);
             font-family: 'Press Start 2P', cursive;
+            margin: 0;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             height: 100vh;
-            margin: 0;
+            color: white;
             overflow: hidden;
         }
 
-        .game-window {
-            background: var(--panel-bg);
-            border: var(--pixel-border);
+        /* 상단 전광판 (총 자산) */
+        .total-assets {
+            font-size: 24px;
             padding: 20px;
-            width: 600px;
-            text-align: center;
-            box-shadow: 10px 10px 0px rgba(0,0,0,0.2);
+            color: var(--text-gold);
+            text-shadow: 2px 2px 0px #000;
         }
 
-        .status-bar {
+        /* 4분할 모니터 그리드 */
+        .monitor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
+            width: 95vw;
+            height: 80vh;
+        }
+
+        /* 개별 모니터 프레임 */
+        .monitor {
+            background: #2c3e50;
+            border: 8px solid var(--monitor-border);
+            border-radius: 10px;
             display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px;
+            position: relative;
+        }
+
+        .monitor::before {
+            content: "MONITOR " attr(data-id);
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: var(--monitor-border);
+            font-size: 10px;
+            padding: 2px 10px;
+        }
+
+        /* 개별 집 카드 (모니터당 2개) */
+        .house-card {
+            background: #ecf0f1;
+            color: #333;
+            width: 45%;
+            height: 90%;
+            border: 4px solid #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: space-between;
             padding: 10px;
-            background: #eee;
-            border: var(--pixel-border);
-            margin-bottom: 20px;
-            font-size: 12px;
-        }
-
-        .house-display {
-            border: var(--pixel-border);
-            padding: 20px;
-            margin-bottom: 20px;
-            background: #fff9db;
+            box-sizing: border-box;
         }
 
         .house-img {
-            width: 120px;
+            width: 60px;
             image-rendering: pixelated;
         }
 
-        .price-tag {
-            font-size: 20px;
-            margin: 15px 0;
-            color: #d63384;
+        .price-display {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 10px 0;
         }
 
-        .trend {
-            font-size: 10px;
-            margin-bottom: 10px;
+        .inventory-info {
+            font-size: 8px;
+            background: #ddd;
+            padding: 5px;
+            width: 100%;
+            text-align: center;
         }
 
-        .inventory {
-            font-size: 12px;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .controls {
+        /* 아케이드 스타일 버튼 */
+        .btn-group {
             display: flex;
-            gap: 10px;
-            justify-content: center;
+            width: 100%;
+            gap: 5px;
         }
 
         button {
+            flex: 1;
             font-family: 'Press Start 2P', cursive;
-            padding: 15px 25px;
-            border: var(--pixel-border);
+            font-size: 8px;
+            padding: 12px 0;
+            border: 3px solid #000;
             cursor: pointer;
-            box-shadow: 0 4px 0 #000;
-            outline: none;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+            color: white;
+            transition: 0.1s;
         }
 
-        button:active { transform: translateY(4px); box-shadow: none; }
-        .buy-btn { background: #51cf66; color: white; }
-        .sell-btn { background: #ff922b; color: white; }
-        button:disabled { background: #adb5bd; cursor: not-allowed; }
+        button:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
 
-        .msg { font-size: 10px; margin-top: 15px; color: #748ffc; height: 10px; }
+        .buy-btn { background-color: var(--buy-color); }
+        .sell-btn { background-color: var(--sell-color); }
+
+        .up { color: #e74c3c; } /* 가격 상승 시 빨간색 */
+        .down { color: #3498db; } /* 가격 하락 시 파란색 */
     </style>
 </head>
 <body>
 
-<div class="game-window">
-    <div class="status-bar">
-        <span>💰 자산: <span id="money">1000</span></span>
-        <span>🏠 보유: <span id="my-houses">0</span></span>
-    </div>
+<div class="total-assets">TOTAL ASSETS: <span id="total-money">5000</span> G</div>
 
-    <div class="house-display">
-        <img src="https://img.icons8.com/pixel-bold/100/null/home.png" class="house-img" alt="house">
-        <div class="label" style="font-size: 14px; margin-top: 10px;">현재 매물: 핑크 궁전</div>
-        <div id="price" class="price-tag">800 G</div>
-        <div id="trend" class="trend">시세 변동 중...</div>
-    </div>
-
-    <div class="inventory">
-        내 평균 구매가: <span id="avg-price">0</span> G
-    </div>
-
-    <div class="controls">
-        <button class="buy-btn" onclick="buyHouse()">구매</button>
-        <button class="sell-btn" onclick="sellHouse()">판매</button>
-    </div>
-
-    <div id="message" class="msg"></div>
+<div class="monitor-grid">
+    <div class="monitor" data-id="1" id="m1"></div>
+    <div class="monitor" data-id="2" id="m2"></div>
+    <div class="monitor" data-id="3" id="m3"></div>
+    <div class="monitor" data-id="4" id="m4"></div>
 </div>
 
 <script>
-    let money = 1000;
-    let houses = 0;
-    let currentPrice = 800;
-    let totalSpent = 0;
+    let globalMoney = 5000;
+    const houseData = [];
+    const houseNames = ["궁전", "별장", "아파트", "빌라", "오두막", "저택", "성", "기지"];
 
-    // 2초마다 시세 변동
-    function updatePrice() {
-        const change = Math.floor(Math.random() * 401) - 200; // -200 ~ +200 변동
-        currentPrice += change;
+    // 8채의 데이터 초기화 및 HTML 생성
+    for (let i = 0; i < 8; i++) {
+        houseData.push({
+            id: i,
+            price: 1000,
+            owned: 0,
+            trend: 0
+        });
 
-        // 최소/최대 가격 제한
-        if (currentPrice < 300) currentPrice = 300;
-        if (currentPrice > 1500) currentPrice = 1500;
+        const monitorIdx = Math.floor(i / 2) + 1;
+        const monitorEl = document.getElementById(`m${monitorIdx}`);
 
-        document.getElementById('price').innerText = currentPrice + " G";
-        
-        const trendEl = document.getElementById('trend');
-        if (change > 0) {
-            trendEl.innerText = "📈 시세 상승 중!";
-            trendEl.style.color = "red";
-        } else {
-            trendEl.innerText = "📉 시세 하락 중!";
-            trendEl.style.color = "blue";
+        const houseHtml = `
+            <div class="house-card">
+                <div style="font-size: 10px;">${houseNames[i]}</div>
+                <img src="https://img.icons8.com/pixel-bold/64/null/home.png" class="house-img">
+                <div id="price-${i}" class="price-display">1000 G</div>
+                <div class="inventory-info">보유: <span id="owned-${i}">0</span></div>
+                <div class="btn-group">
+                    <button class="buy-btn" onclick="buy(${i})">BUY</button>
+                    <button class="sell-btn" onclick="sell(${i})">SELL</button>
+                </div>
+            </div>
+        `;
+        monitorEl.innerHTML += houseHtml;
+    }
+
+    // 시세 변동 로직 (0.8초마다 모든 집 가격이 다르게 변함)
+    function updatePrices() {
+        houseData.forEach((house, i) => {
+            const change = Math.floor(Math.random() * 301) - 150; // -150 ~ +150
+            house.price += change;
+            if (house.price < 200) house.price = 200;
+            if (house.price > 3000) house.price = 3000;
+
+            const priceEl = document.getElementById(`price-${i}`);
+            priceEl.innerText = house.price + " G";
+            priceEl.className = `price-display ${change >= 0 ? 'up' : 'down'}`;
+        });
+    }
+
+    function buy(id) {
+        if (globalMoney >= houseData[id].price) {
+            globalMoney -= houseData[id].price;
+            houseData[id].owned++;
+            updateUI();
         }
     }
 
-    function buyHouse() {
-        if (money >= currentPrice) {
-            money -= currentPrice;
-            totalSpent += currentPrice;
-            houses++;
+    function sell(id) {
+        if (houseData[id].owned > 0) {
+            globalMoney += houseData[id].price;
+            houseData[id].owned--;
             updateUI();
-            showMessage("집을 구매했습니다!");
-        } else {
-            showMessage("돈이 부족합니다!");
-        }
-    }
-
-    function sellHouse() {
-        if (houses > 0) {
-            money += currentPrice;
-            houses--;
-            if (houses === 0) totalSpent = 0; // 다 팔면 평균가 초기화
-            updateUI();
-            showMessage("집을 판매했습니다! 이득: " + currentPrice + "G");
-        } else {
-            showMessage("팔 수 있는 집이 없습니다!");
         }
     }
 
     function updateUI() {
-        document.getElementById('money').innerText = money;
-        document.getElementById('my-houses').innerText = houses;
-        const avg = houses > 0 ? Math.floor(totalSpent / (houses + (totalSpent===0?0:0))) : 0; // 단순화된 평균
-        document.getElementById('avg-price').innerText = houses > 0 ? Math.floor(totalSpent / (houses + (houses===0?0:houses-houses))) : 0;
+        document.getElementById('total-money').innerText = globalMoney;
+        houseData.forEach((house, i) => {
+            document.getElementById(`owned-${i}`).innerText = house.owned;
+        });
     }
 
-    function showMessage(text) {
-        const msgEl = document.getElementById('message');
-        msgEl.innerText = text;
-        setTimeout(() => msgEl.innerText = "", 2000);
-    }
-
-    setInterval(updatePrice, 2000); // 2초마다 가격 업데이트
+    setInterval(updatePrices, 800); // 아케이드의 빠른 속도감을 위해 0.8초 설정
 </script>
 
 </body>
