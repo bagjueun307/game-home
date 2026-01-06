@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>부동산 타이쿤 - 쥬디 스타일</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8bbd0; /* 쥬디 느낌의 핑크 배경 */
+            --panel-bg: #ffffff;
+            --pixel-border: 4px solid #000;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .game-window {
+            background: var(--panel-bg);
+            border: var(--pixel-border);
+            padding: 20px;
+            width: 600px;
+            text-align: center;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.2);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: #eee;
+            border: var(--pixel-border);
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+
+        .house-display {
+            border: var(--pixel-border);
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #fff9db;
+        }
+
+        .house-img {
+            width: 120px;
+            image-rendering: pixelated;
+        }
+
+        .price-tag {
+            font-size: 20px;
+            margin: 15px 0;
+            color: #d63384;
+        }
+
+        .trend {
+            font-size: 10px;
+            margin-bottom: 10px;
+        }
+
+        .inventory {
+            font-size: 12px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            font-family: 'Press Start 2P', cursive;
+            padding: 15px 25px;
+            border: var(--pixel-border);
+            cursor: pointer;
+            box-shadow: 0 4px 0 #000;
+            outline: none;
+        }
+
+        button:active { transform: translateY(4px); box-shadow: none; }
+        .buy-btn { background: #51cf66; color: white; }
+        .sell-btn { background: #ff922b; color: white; }
+        button:disabled { background: #adb5bd; cursor: not-allowed; }
+
+        .msg { font-size: 10px; margin-top: 15px; color: #748ffc; height: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="game-window">
+    <div class="status-bar">
+        <span>💰 자산: <span id="money">1000</span></span>
+        <span>🏠 보유: <span id="my-houses">0</span></span>
+    </div>
+
+    <div class="house-display">
+        <img src="https://img.icons8.com/pixel-bold/100/null/home.png" class="house-img" alt="house">
+        <div class="label" style="font-size: 14px; margin-top: 10px;">현재 매물: 핑크 궁전</div>
+        <div id="price" class="price-tag">800 G</div>
+        <div id="trend" class="trend">시세 변동 중...</div>
+    </div>
+
+    <div class="inventory">
+        내 평균 구매가: <span id="avg-price">0</span> G
+    </div>
+
+    <div class="controls">
+        <button class="buy-btn" onclick="buyHouse()">구매</button>
+        <button class="sell-btn" onclick="sellHouse()">판매</button>
+    </div>
+
+    <div id="message" class="msg"></div>
+</div>
+
+<script>
+    let money = 1000;
+    let houses = 0;
+    let currentPrice = 800;
+    let totalSpent = 0;
+
+    // 2초마다 시세 변동
+    function updatePrice() {
+        const change = Math.floor(Math.random() * 401) - 200; // -200 ~ +200 변동
+        currentPrice += change;
+
+        // 최소/최대 가격 제한
+        if (currentPrice < 300) currentPrice = 300;
+        if (currentPrice > 1500) currentPrice = 1500;
+
+        document.getElementById('price').innerText = currentPrice + " G";
+        
+        const trendEl = document.getElementById('trend');
+        if (change > 0) {
+            trendEl.innerText = "📈 시세 상승 중!";
+            trendEl.style.color = "red";
+        } else {
+            trendEl.innerText = "📉 시세 하락 중!";
+            trendEl.style.color = "blue";
+        }
+    }
+
+    function buyHouse() {
+        if (money >= currentPrice) {
+            money -= currentPrice;
+            totalSpent += currentPrice;
+            houses++;
+            updateUI();
+            showMessage("집을 구매했습니다!");
+        } else {
+            showMessage("돈이 부족합니다!");
+        }
+    }
+
+    function sellHouse() {
+        if (houses > 0) {
+            money += currentPrice;
+            houses--;
+            if (houses === 0) totalSpent = 0; // 다 팔면 평균가 초기화
+            updateUI();
+            showMessage("집을 판매했습니다! 이득: " + currentPrice + "G");
+        } else {
+            showMessage("팔 수 있는 집이 없습니다!");
+        }
+    }
+
+    function updateUI() {
+        document.getElementById('money').innerText = money;
+        document.getElementById('my-houses').innerText = houses;
+        const avg = houses > 0 ? Math.floor(totalSpent / (houses + (totalSpent===0?0:0))) : 0; // 단순화된 평균
+        document.getElementById('avg-price').innerText = houses > 0 ? Math.floor(totalSpent / (houses + (houses===0?0:houses-houses))) : 0;
+    }
+
+    function showMessage(text) {
+        const msgEl = document.getElementById('message');
+        msgEl.innerText = text;
+        setTimeout(() => msgEl.innerText = "", 2000);
+    }
+
+    setInterval(updatePrice, 2000); // 2초마다 가격 업데이트
+</script>
+
+</body>
+</html>
